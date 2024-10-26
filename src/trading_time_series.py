@@ -83,6 +83,54 @@ class TradingTimeSeries:
 
         return TradingTimeSeries(data=vix_series)
 
+    def vix_futures_term_structure(self, date: str) -> pd.Series:
+        """
+        Computes the VIX futures monthly term structure at a given date.
+        """
+        vix_tickers = ["VX1", "VX2", "VX3", "VX4", "VX5", "VX6", "VX7", "VX8"]
+        vix_futures_data = {}
+
+        for ticker in vix_tickers:
+            vix_future = yf.download(
+                f"{ticker}=F", start=date, end=date, progress=False
+            )
+            if not vix_future.empty:
+                vix_futures_data[ticker] = vix_future["Close"].iloc[0]
+
+        term_structure = pd.Series(vix_futures_data)
+        term_structure.index = [f"Month {i+1}" for i in range(len(term_structure))]
+        return term_structure
+
+    def term_structure_type(self, term_structure: pd.Series) -> str:
+        """
+        Determines if the VIX futures term structure is in contango, backwardation, or undefined.
+        """
+        if len(term_structure) < 2:
+            return "undefined"
+        if term_structure.iloc[0] < term_structure.iloc[-1]:
+            return "contango"
+        elif term_structure.iloc[0] > term_structure.iloc[-1]:
+            return "backwardation"
+        else:
+            return "undefined"
+
+    def generate_vix_term_structure_series(self) -> "TradingTimeSeries":
+        """
+        Generates the VIX term structure and type for each date in the series.
+        Returns a new TradingTimeSeries with term structure types.
+        """
+        term_structure_results = {}
+
+        for date in self.data.index:
+            date_str = date.strftime("%Y-%m-%d")
+            term_structure = self.vix_futures_term_structure(date_str)
+            structure_type = self.term_structure_type(term_structure)
+            term_structure_results[date] = structure_type
+
+        # Create a new series with the term structure type for each date
+        term_structure_series = pd.Series(term_structure_results, index=self.data.index)
+        return TradingTimeSeries(data=term_structure_series)
+
     def __len__(self):
         return len(self.data)
 

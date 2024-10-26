@@ -58,3 +58,28 @@ def test_fetch_vix_series(vix_type):
     # Ensure that the VIX series has the same start and end dates as the original series
     assert vix_series.data.index.min() >= series.data.index.min()
     assert vix_series.data.index.max() <= series.data.index.max()
+
+
+# @pytest.mark.skipif(not is_internet_accessible(), reason="No internet connection")
+def test_generate_vix_term_structure_series():
+    # Create a sample time series with a defined date range
+    data = pd.Series(
+        [100, 101, 102, 103, 104], index=pd.date_range("2023-01-01", periods=5)
+    )
+    series = TradingTimeSeries(data=data)
+
+    # Generate the VIX term structure series
+    vix_term_structure_series = series.generate_vix_term_structure_series()
+
+    # Ensure the result is a TradingTimeSeries instance
+    assert isinstance(vix_term_structure_series, TradingTimeSeries)
+
+    # Check that the term structure series is not empty
+    assert not vix_term_structure_series.data.empty
+
+    # Ensure the length matches the original series
+    assert len(vix_term_structure_series) == len(series)
+
+    # Check that the series contains only the expected values
+    for value in vix_term_structure_series.data:
+        assert value in ["contango", "backwardation", "undefined"]
