@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import pandas as pd
+import yfinance as yf
 import numpy as np
 from sklearn.metrics import mutual_info_score
 
@@ -50,6 +51,23 @@ class TradingTimeSeries:
         """
         resampled_data = self.data.resample(rule).mean()
         return TradingTimeSeries(data=resampled_data)
+
+    def fetch_vix_series(self) -> "TradingTimeSeries":
+        """
+        Fetches the VIX index from Yahoo Finance over the time range of the current series.
+        Returns a new instance of TradingTimeSeries.
+        """
+        start_date = self.data.index.min().strftime("%Y-%m-%d")
+        end_date = self.data.index.max().strftime("%Y-%m-%d")
+
+        # Fetch the VIX data from Yahoo Finance
+        vix_data = yf.download("^VIX", start=start_date, end=end_date, progress=False)
+
+        # Ensure VIX data is indexed by date
+        vix_series = vix_data["Close"]
+        vix_series.index = pd.to_datetime(vix_series.index)
+
+        return TradingTimeSeries(data=vix_series)
 
     def __len__(self):
         return len(self.data)
