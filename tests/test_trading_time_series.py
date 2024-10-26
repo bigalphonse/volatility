@@ -38,15 +38,16 @@ def test_mutual_information():
 
 
 # @pytest.mark.skipif(not is_internet_accessible(), reason="No internet connection")
-def test_fetch_vix_series():
+@pytest.mark.parametrize("vix_type", ["regular", "vix9d", "vix1d"])
+def test_fetch_vix_series(vix_type):
     # Create a sample time series with a defined date range
     data = pd.Series(
-        [100, 101, 102, 103, 104], index=pd.date_range("2023-01-01", periods=5)
+        [100, 101, 102, 103, 104], index=pd.date_range("2024-01-01", periods=5)
     )
     series = TradingTimeSeries(data=data)
 
-    # Fetch the VIX series over the same date range
-    vix_series = series.fetch_vix_series()
+    # Fetch the specified VIX series
+    vix_series = series.fetch_vix_series(vix_type=vix_type)
 
     # Ensure the VIX series is a TradingTimeSeries instance
     assert isinstance(vix_series, TradingTimeSeries)

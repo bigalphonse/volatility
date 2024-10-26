@@ -52,16 +52,30 @@ class TradingTimeSeries:
         resampled_data = self.data.resample(rule).mean()
         return TradingTimeSeries(data=resampled_data)
 
-    def fetch_vix_series(self) -> "TradingTimeSeries":
+    def fetch_vix_series(self, vix_type: str = "regular") -> "TradingTimeSeries":
         """
-        Fetches the VIX index from Yahoo Finance over the time range of the current series.
-        Returns a new instance of TradingTimeSeries.
+        Fetches the specified VIX series from Yahoo Finance over the time range of the current series.
+
+        Args:
+            vix_type (str): Type of VIX to fetch - 'regular', 'vix9d', or 'vix1d'.
+
+        Returns:
+            A new instance of TradingTimeSeries containing the VIX series data.
         """
+        # Map VIX types to Yahoo Finance tickers
+        vix_tickers = {"regular": "^VIX", "vix9d": "^VIX9D", "vix1d": "^VIX1D"}
+
+        if vix_type not in vix_tickers:
+            raise ValueError(
+                "Invalid vix_type. Choose from 'regular', 'vix9d', or 'vix1d'."
+            )
+
         start_date = self.data.index.min().strftime("%Y-%m-%d")
         end_date = self.data.index.max().strftime("%Y-%m-%d")
+        ticker = vix_tickers[vix_type]
 
         # Fetch the VIX data from Yahoo Finance
-        vix_data = yf.download("^VIX", start=start_date, end=end_date, progress=False)
+        vix_data = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
         # Ensure VIX data is indexed by date
         vix_series = vix_data["Close"]
